@@ -25,6 +25,7 @@ local opt_train = {
    gpu = 1,                -- gpu = 0 is CPU mode. gpu=X is GPU mode on GPU X
    name = '',              -- name of the experiment, should generally be passed on the command line
    which_direction = 'AtoB',    -- AtoB or BtoA
+   which_models = 'AB',          ---A,B or AB (should always be AB in training mode)
    phase = 'train',             -- train, val, test, etc
    nThreads = 2,                -- # threads for loading data
    save_epoch_freq = 1,         -- save a model every save_epoch_freq epochs (does not overwrite previously saved models)
@@ -75,7 +76,8 @@ local opt_test = {
   model = 'cycle_gan',               -- which mode to run. 'cycle_gan', 'pix2pix', 'bigan', 'content_gan'; to use pretrained model, select `one_direction_test`
   align_data = 0,                    -- if > 0, use the dataloader for pix2pix
   which_direction = 'AtoB',          -- AtoB or BtoA
-  resize_or_crop = 'resize_and_crop',  -- resizing/cropping strategy
+  which_models = 'A',                ---A,B or AB
+   resize_or_crop = 'resize_and_crop',  -- resizing/cropping strategy
 }
 
 --------------------------------------------------------------------------------
