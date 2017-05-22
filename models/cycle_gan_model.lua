@@ -21,8 +21,12 @@ end
 -- Defines models and networks
 function CycleGANModel:Initialize(opt)
   if opt.test == 0 then
-    self.fakeAPool = ImagePool(opt.pool_size)
-    self.fakeBPool = ImagePool(opt.pool_size)
+    if opt.which_models=='A' or  opt.which_models=='AB' then
+      self.fakeAPool = ImagePool(opt.pool_size)
+    end
+    if opt.which_models=='B' or  opt.which_models=='AB' then
+      self.fakeBPool = ImagePool(opt.pool_size)
+    end
   end
   -- define tensors
   if opt.test == 0 then  -- allocate tensors for training
@@ -45,8 +49,12 @@ function CycleGANModel:Initialize(opt)
   local netG_A, netD_A, netG_B, netD_B = nil, nil, nil, nil
   if opt.continue_train == 1 then
     if opt.test == 1 then -- test mode
-      netG_A = util.load_test_model('G_A', opt)
-      netG_B = util.load_test_model('G_B', opt)
+      if opt.which_models=='A' or  opt.which_models=='AB' then
+        netG_A = util.load_test_model('G_A', opt)
+      end
+      if opt.which_models=='B' or  opt.which_models=='AB' then
+        netG_B = util.load_test_model('G_B', opt)
+      end
     else
       netG_A = util.load_model('G_A', opt)
       netG_B = util.load_model('G_B', opt)
@@ -110,16 +118,30 @@ function CycleGANModel:Forward(input, opt)
 
   if opt.test == 1 then  -- forward for test
     if opt.gpu > 0 then
-      self.real_A = input.real_A:cuda()
-      self.real_B = input.real_B:cuda()
+      if opt.which_models=='A' or  opt.which_models=='AB' then
+        self.real_A = input.real_A:cuda()
+      end
+      if opt.which_models=='B' or  opt.which_models=='AB' then
+        self.real_B = input.real_B:cuda()
+      end
     else
-      self.real_A = input.real_A:clone()
-      self.real_B = input.real_B:clone()
+      if opt.which_models=='A' or  opt.which_models=='AB' then
+        self.real_A = input.real_A:clone()
+      end
+      if opt.which_models=='B' or  opt.which_models=='AB' then
+        self.real_B = input.real_B:clone()
+      end
     end
-    self.fake_B = self.netG_A:forward(self.real_A):clone()
-    self.fake_A = self.netG_B:forward(self.real_B):clone()
-    self.rec_A  = self.netG_B:forward(self.fake_B):clone()
-    self.rec_B  = self.netG_A:forward(self.fake_A):clone()
+    if opt.which_models=='A' or  opt.which_models=='AB' then
+      self.fake_B = self.netG_A:forward(self.real_A):clone()
+    end
+    if opt.which_models=='B' or  opt.which_models=='AB' then
+      self.fake_A = self.netG_B:forward(self.real_B):clone()
+    end
+    if opt.which_models=='AB' then
+      self.rec_A  = self.netG_B:forward(self.fake_B):clone()
+      self.rec_B  = self.netG_A:forward(self.fake_A):clone()
+    end
   end
 end
 
@@ -299,15 +321,27 @@ end
 
 function CycleGANModel:GetCurrentVisuals(opt, size)
   local visuals = {}
-  table.insert(visuals, {img=MakeIm3(self.real_A), label='real_A'})
-  table.insert(visuals, {img=MakeIm3(self.fake_B), label='fake_B'})
-  table.insert(visuals, {img=MakeIm3(self.rec_A), label='rec_A'})
+  if opt.which_models=='A' or  opt.which_models=='AB' then
+    table.insert(visuals, {img=MakeIm3(self.real_A), label='real_A'})
+  end
+  if opt.which_models=='A' or  opt.which_models=='AB' then
+    table.insert(visuals, {img=MakeIm3(self.fake_B), label='fake_B'})
+  end
+  if opt.which_models=='AB' then
+    table.insert(visuals, {img=MakeIm3(self.rec_A), label='rec_A'})
+  end
   if opt.test == 0 and opt.identity > 0 then
     table.insert(visuals, {img=MakeIm3(self.identity_A), label='identity_A'})
   end
-  table.insert(visuals, {img=MakeIm3(self.real_B), label='real_B'})
-  table.insert(visuals, {img=MakeIm3(self.fake_A), label='fake_A'})
-  table.insert(visuals, {img=MakeIm3(self.rec_B), label='rec_B'})
+  if opt.which_models=='B' or  opt.which_models=='AB' then
+    table.insert(visuals, {img=MakeIm3(self.real_B), label='real_B'})
+  end
+  if opt.which_models=='B' or  opt.which_models=='AB' then
+    table.insert(visuals, {img=MakeIm3(self.fake_A), label='fake_A'})
+  end
+  if opt.which_models=='AB' then
+    table.insert(visuals, {img=MakeIm3(self.rec_B), label='rec_B'})
+  end
   if opt.test == 0 and opt.identity > 0 then
     table.insert(visuals, {img=MakeIm3(self.identity_B), label='identity_B'})
   end
